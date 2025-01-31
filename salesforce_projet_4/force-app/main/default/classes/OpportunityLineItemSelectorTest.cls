@@ -18,9 +18,9 @@
  * the org size limit for all Apex scripts.
  *
  * See the Apex Language Reference for more information about Testing and Code Coverage.
- */
-@isTest
-private class OpportunityProductsControllerTest {
+ */@isTest
+private class OpportunityLineItemSelectorTest {
+    // Remove instance variable (not compatible with @TestSetup)
     @TestSetup
     static void setup() {
         TestDataFactory.setupTestData();
@@ -35,19 +35,24 @@ private class OpportunityProductsControllerTest {
         List<OpportunityLineItem> results = OpportunityProductsController.getOpportunityProducts(opp.Id);
         Test.stopTest();
         
-        System.assertEquals(2, results.size(), 'Expected two OpportunityLineItems');
+        // Verify 2 items are returned (matches TestDataFactory setup)
+        System.assertEquals(2, results.size(), 'Deux produits devraient être liés à l’opportunité');
     }
-
     @isTest
-    static void testDeleteProduct() {
-        OpportunityLineItem oppItem = [SELECT Id, OpportunityId FROM OpportunityLineItem LIMIT 1];
+    static void testGetOpportunityProduct() {
+        // Get test Opportunity with its Products
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE Name = 'Test Opportunity' LIMIT 1];
+        
+        List<OpportunityLineItem> results = OpportunityProductsController.getOpportunityProducts(opp.Id);
         
         Test.startTest();
-        OpportunityProductsController.deleteProduct(oppItem.Id);
+        OpportunityLineItem result = OpportunityLineItemSelector.getOpportunityProduct(results[0].Id);
         Test.stopTest();
-    
-        List<OpportunityLineItem> remainingItems = [SELECT Id FROM OpportunityLineItem 
-            WHERE OpportunityId = :oppItem.OpportunityId];
-        System.assertEquals(1, remainingItems.size(), 'One product should remain after deletion');
+
+        // Verify 2 items are returned (matches TestDataFactory setup)
+        // Verify the correct record is returned
+        System.assertNotEquals(null, result, 'Le produit de l’opportunité ne doit pas être null');
+        System.assertEquals(results[0].Id, result.Id, 'L’ID de l’élément retourné doit correspondre à celui de test');
     }
+    // Remove cleanup method (test data is auto-rolled back)
 }

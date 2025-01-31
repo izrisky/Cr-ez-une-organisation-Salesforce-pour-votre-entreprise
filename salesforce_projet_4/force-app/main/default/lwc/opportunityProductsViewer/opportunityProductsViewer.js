@@ -3,6 +3,7 @@ import { LightningElement, api, wire, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation'; // For navigation functionality
 import { refreshApex } from '@salesforce/apex'; // To refresh data from Apex
 import { ShowToastEvent } from 'lightning/platformShowToastEvent'; // For displaying toast messages
+
 import CanSeeProductPermission from '@salesforce/customPermission/CanSeeProduct'; // Custom permission to control access
 
 // Import Apex methods for data operations
@@ -15,12 +16,21 @@ import deleteLabel from '@salesforce/label/c.Delete';
 import lineQuantityErrorLabel from '@salesforce/label/c.Line_quantity_error';
 import productLinesEmptyLabel from '@salesforce/label/c.product_lines_empty';
 import opportunityProductsLabel from '@salesforce/label/c.Opportunity_products';
-import opportunityUpdateErrorLabel from '@salesforce/label/c.opportunity_update_error';
 import quantityLabel from '@salesforce/label/c.quantity';
 import quantityInstockLabel from '@salesforce/label/c.Quantity_in_stock';
 import seeProductLabel from '@salesforce/label/c.See_product';
 import totalPriceLabel from '@salesforce/label/c.Total_Price';
 import unitPriceLabel from '@salesforce/label/c.Unit_Price';
+
+import successLabel from '@salesforce/label/c.Success';
+import errorLabel from '@salesforce/label/c.Error';
+import errorDeletingProductLabel from '@salesforce/label/c.error_deleting_product';
+import failedToNavigatePageLabel from '@salesforce/label/c.Failed_to_navigate_page';
+import invalidOpportunityLine from '@salesforce/label/c.Invalid_opportunity_line';
+import productSuccessfullyDeletedLabel from '@salesforce/label/c.product_successfully_deleted';
+
+
+
 
 export default class OpportunityProductsViewer extends  NavigationMixin(LightningElement) {
     @api recordId; // Opportunity ID passed to the component
@@ -30,13 +40,12 @@ export default class OpportunityProductsViewer extends  NavigationMixin(Lightnin
     @track noProducts = false; // Tracks if there are no products to display
     @track errorProductLine = false; // Tracks if there is an error in product line quantities
     @track columns = this.initColumns(); // Initializes the columns for the data table
-
+    hasError = false; // Par défaut, aucune erreur
 
     // Custom labels for error messages and UI
     quantityError=lineQuantityErrorLabel;
     opportunityProducts=opportunityProductsLabel;
     productLinesEmpty=productLinesEmptyLabel;
-    opportunityUpdateError=opportunityUpdateErrorLabel;
 
 
     // Method to initialize the columns for the data table
@@ -113,7 +122,6 @@ export default class OpportunityProductsViewer extends  NavigationMixin(Lightnin
         }
         
     }
-    
 
     handleRowAction(event) {
         const action = event.detail.action;
@@ -134,13 +142,13 @@ export default class OpportunityProductsViewer extends  NavigationMixin(Lightnin
     deleteProduct(lineItemId) {
         deleteProduct({ lineItemId })
             .then(() => {
-                this.showToast('Succès', 'Le produit a été supprimé avec succès.', 'success');
                 this.products = this.products.filter(product => product.Id !== lineItemId);
                 this.noProducts = this.products.length === 0;
                 this.refreshProducts();
+                this.showToast(successLabel, productSuccessfullyDeletedLabel, 'success');
             })
             .catch(error => {
-                this.showToast('Erreur', 'Une erreur s\'est produite lors de la suppression du produit.', 'error');
+                this.showToast(errorLabel, errorDeletingProductLabel, 'error');
                 console.error('Erreur lors de la suppression du produit :', error);
             });
     }
@@ -148,7 +156,7 @@ export default class OpportunityProductsViewer extends  NavigationMixin(Lightnin
     // Method to navigate to the product details page
      viewProduct(opportunityLineItemId) {
         if (!opportunityLineItemId) {
-            this.showToast('Erreur', 'ID de la ligne d\'opportunité non valide.', 'error');
+            this.showToast(errorLabel, invalidOpportunityLine, 'error');
             return;
         }
         try {
@@ -162,7 +170,7 @@ export default class OpportunityProductsViewer extends  NavigationMixin(Lightnin
                 }
             });
         } catch (error) {
-            this.showToast('Erreur', 'Échec de la navigation vers la page de la ligne d\'opportunité.', 'error');
+            this.showToast(errorLabel, failedToNavigatePageLabel, 'error');
         }
     }
 

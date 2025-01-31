@@ -13,9 +13,6 @@
                 onrowaction={handleRowAction}>
             </lightning-datatable>
         </template>
-        <template if:true={error}>
-            <p class="slds-text-color_error">{opportunityUpdateErrorLabel}</p>
-        </template>
         <template if:true={noProducts}>
             <p style="white-space: pre-line;">{productLinesEmpty}</p>
         </template>
